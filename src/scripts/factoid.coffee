@@ -14,8 +14,10 @@
 #   ~<factoid> - Prints the factoid, if it exists. Otherwise tells you there is no factoid
 #   ~tell <user> about <factoid> - Tells the user about a factoid, if it exists
 #   ~~<user> <factoid> - Same as ~tell, less typing
-#   <factoid>? - Same as ~<factiod> except for there is no response if not found
+#   <factoid>? - Same as ~<factoid> except for there is no response if not found
 #   hubot no, <factoid> is <some phrase, link, whatever> - Replaces the full definition of a factoid
+#   hubot factoids list - List all factoids
+#   hubot factoid delete "<factoid>" - delete a factoid
 #
 # Author:
 #   arthurkalm
@@ -27,29 +29,48 @@ class Factoids
       @cache = {} unless @cache
 
   add: (key, val) ->
+    input = key
+    key = key.toLowerCase() unless @cache[key]?
     if @cache[key]
-      "#{key} is already #{@cache[key]}"
-    else 
-      this.setFactoid key, val
+      "#{input} is already #{@cache[key]}"
+    else
+      this.setFactoid input, val
 
   append: (key, val) ->
+    input = key
+    key = key.toLowerCase() unless @cache[key]?
     if @cache[key]
       @cache[key] = @cache[key] + ", " + val
       @robot.brain.data.factoids = @cache
-      "Ok. #{key} is also #{val} "
-    else 
-      "No factoid for #{key}. It can't also be #{val} if it isn't already something."
+      "Ok. #{input} is also #{val} "
+    else
+      "No factoid for #{input}. It can't also be #{val} if it isn't already something."
 
   setFactoid: (key, val) ->
+    input = key
+    key = key.toLowerCase() unless @cache[key]?
     @cache[key] = val
     @robot.brain.data.factoids = @cache
-    "OK. #{key} is #{val} "
+    "OK. #{input} is #{val} "
+
+  delFactoid: (key) ->
+    input = key
+    key = key.toLowerCase() unless @cache[key]?
+    delete @cache[key]
+    @robot.brain.data.factoids = @cache
+    "OK. I forgot about #{input}"
 
   niceGet: (key) ->
-    @cache[key] or "No factoid for #{key}"
+    input = key
+    key = key.toLowerCase() unless @cache[key]?
+    @cache[key] or "No factoid for #{input}"
 
   get: (key) ->
+    key = key.toLowerCase() unless @cache[key]?
     @cache[key]
+
+  list: ->
+    Object.keys(@cache)
 
   tell: (person, key) ->
     factoid = this.get key
@@ -59,11 +80,11 @@ class Factoids
       factoid
 
   handleFactoid: (text) ->
-    if match = /^~(.+) is also (.+)/i.exec text
+    if match = /^~(.+?) is also (.+)/i.exec text
       this.append match[1], match[2]
-    else if match = /^~(.+) is (.+)/i.exec text
+    else if match = /^~(.+?) is (.+)/i.exec text
       this.add match[1], match[2]
-    else if match = (/^~tell (.+) about (.+)/i.exec text) or (/^~~(.+) (.+)/.exec text)
+    else if match = (/^~tell (.+?) about (.+)/i.exec text) or (/^~~(.+) (.+)/.exec text)
       this.tell match[1], match[2]
     else if match = /^~(.+)/i.exec text
       this.niceGet match[1]
@@ -75,7 +96,7 @@ module.exports = (robot) ->
     if match = (/^~tell (.+) about (.+)/i.exec msg.match) or (/^~~(.+) (.+)/.exec msg.match)
       msg.send factoids.handleFactoid msg.message.text
     else
-      msg.reply factoids.handleFactoid msg.message.text 
+      msg.reply factoids.handleFactoid msg.message.text
 
   robot.hear /(.+)\?/i, (msg) ->
     factoid = factoids.get msg.match[1]
@@ -84,3 +105,9 @@ module.exports = (robot) ->
 
   robot.respond /no, (.+) is (.+)/i, (msg) ->
     msg.reply factoids.setFactoid msg.match[1], msg.match[2]
+
+  robot.respond /factoids? list/i, (msg) ->
+    msg.send factoids.list().join('\n')
+
+  robot.respond /factoids? delete "(.*)"$/i, (msg) ->
+    msg.reply factoids.delFactoid msg.match[1]

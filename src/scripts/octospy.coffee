@@ -124,6 +124,11 @@ views =
       {{sender.login}} commented on issue {{issue.number}} on {{repo_name}} "{{{overflow issue.title 25}}}" {{issue.html_url}}
       > {{{overflow comment.body 120}}}
     """
+  commit_comment:
+    """
+    {{sender.login}} commented on commit {{comment.commit_id}} on {{repo_name}} {{comment.html_url}}
+    > {{{overflow comment.body 120}}}
+    """
   pull_request: (context) ->
     template = switch context.action
       when 'opened'
@@ -148,6 +153,11 @@ views =
     template = Handlebars.compile(template)
     message = template(context)
 
+  pull_request_review_comment:
+    """
+      {{sender.login}} commented on pull request {{pull_request.number}} on {{repo_name}} "{{{overflow pull_request.title 25}}}" {{pull_request.html_url}}
+      > {{{overflow comment.body 120}}}
+    """
   gollum:
     """
       {{#each pages}}
@@ -351,7 +361,7 @@ module.exports = (robot) ->
     message = '[octospy] ' +  renderTemplate(event,context)
 
     # Tell the people who care
-    listeners = (robot.userForId(id) for id in (robot.brain.data.octospy[github_url]?[repo_name][event] || []))
+    listeners = (robot.brain.userForId(id) for id in (robot.brain.data.octospy[github_url]?[repo_name][event] || []))
 
     # group rooms together, so we don't spam with multiple people with subs
     for room, users of _.groupBy(listeners, 'room') when room

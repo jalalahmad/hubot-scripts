@@ -3,7 +3,7 @@
 #
 # Dependencies:
 #   "htmlparser": "1.7.6"
-#   "soupselect: "0.2.0"
+#   "soupselect": "0.2.0"
 #   "jsdom": "0.2.14"
 #   "underscore": "1.3.3"
 #
@@ -65,7 +65,7 @@ get_quote = (msg, quotes) ->
 		msg.send quote
 	else
 		keep_it_clean msg, quote, (body, err) -> 
-			msg.send staticquotes[Math.floor(Math.random() * staticquotes.length)] if err 
+			msg.send StaticQuotes[Math.floor(Math.random() * StaticQuotes.length)] if err 
 			#because potty word just sounds funny
 			msg.send body.getElementsByTagName("CleanText")[0].firstChild.nodeValue.replace /(Explicit)+/g, "potty word"
 

@@ -11,9 +11,9 @@
 #   None
 #
 # URLs:
-#   GET /hubot/say?message=<message>[&room=<room>&type=<type]
+#   GET /hubot/say?message=<message>[&room=<room>&type=<type>]
 #
-# Authors:
+# Author:
 #   ajacksified
 
 querystring = require('querystring')
@@ -22,10 +22,11 @@ module.exports = (robot) ->
   robot.router.get "/hubot/say", (req, res) ->
     query = querystring.parse(req._parsedUrl.query)
 
-    user = {}
-    user.room = query.room if query.room
-    user.type = query.type if query.type
+    envelope = {}
+    envelope.user = {}
+    envelope.user.room = envelope.room = query.room if query.room
+    envelope.user.type = query.type or 'groupchat'
 
-    robot.send(user, query.message)
+    robot.send envelope, query.message
 
     res.end "Said #{query.message}"
